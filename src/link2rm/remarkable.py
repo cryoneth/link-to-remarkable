@@ -64,14 +64,20 @@ def upload_pdf(
             "Run `link2rm --register` or `link2rm <url>` to trigger first-time auth."
         )
 
+    import os as _os
+    env_extras = {
+        "TOKEN_FILE": str(tf),
+        "DOC_NAME": doc_name,
+        "PDF_PATH": str(pdf_path),
+        "FOLDER_NAME": folder,
+    }
+    # Pass through REMARKABLE_FOLDER_ID if set — skips the expensive listIds scan
+    if folder_id := _os.getenv("REMARKABLE_FOLDER_ID", ""):
+        env_extras["REMARKABLE_FOLDER_ID"] = folder_id
+
     out = _run_node(
         SCRIPTS_DIR / "rm-upload.mjs",
-        {
-            "TOKEN_FILE": str(tf),
-            "DOC_NAME": doc_name,
-            "PDF_PATH": str(pdf_path),
-            "FOLDER_NAME": folder,
-        },
+        env_extras,
         capture_stdout=True,
     )
     return json.loads(out.strip()) if out.strip() else {}
