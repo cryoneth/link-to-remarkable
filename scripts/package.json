@@ -1,0 +1,9 @@
+{
+  "name": "rm-upload",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "reMarkable upload helper for link2rm (wraps rmapi-js)",
+  "dependencies": {
+    "rmapi-js": "^9.0.2"
+  }
+}

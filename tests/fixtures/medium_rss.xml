@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>The Pragmatic Programmer</title>
+    <link>https://medium.com/@pragprog</link>
+    <description>Software craftsmanship essays</description>
+    <item>
+      <title>The Hidden Cost of Abstractions</title>
+      <link>https://medium.com/@pragprog/the-hidden-cost-of-abstractions-a1b2c3d4e5f6</link>
+      <dc:creator>David Thomas</dc:creator>
+      <pubDate>Fri, 22 Mar 2024 10:00:00 GMT</pubDate>
+      <content:encoded><![CDATA[<p>Every abstraction is a bet. You are betting that the complexity you are hiding will never matter—that the leaky parts of your model will never be exposed to your users.</p><p>Sometimes you win that bet. A well-chosen abstraction pays dividends for years. Files as a uniform interface over many storage devices. Sockets as a uniform interface over many network protocols. The bet paid off.</p><p>But abstractions leak. Joel Spolsky wrote about this in 2002, and nothing has changed. TCP/IP leaks when you need to reason about latency. File system abstractions leak when you care about durability guarantees. HTTP abstractions leak under load.</p><p>The cost is not just the eventual leak. The cost is that abstractions hide information that might be necessary for good decisions. A developer who only knows the ORM layer cannot make good decisions about query performance. A developer who only knows the cloud SDK cannot make good decisions about cost.</p><p>Good engineering requires knowing when to abstract and when to reach through the abstraction. The most dangerous developers are those who believe the abstraction is the reality.</p><p>Choose abstractions deliberately. Know where they leak. Keep the option to remove them.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

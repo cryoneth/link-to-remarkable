@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://arxiv.org/api/query?search_query=id:2312.12245</id>
+  <updated>2024-03-20T00:00:00Z</updated>
+  <entry>
+    <id>http://arxiv.org/abs/2312.12245v2</id>
+    <updated>2024-01-10T00:00:00Z</updated>
+    <published>2023-12-19T00:00:00Z</published>
+    <title>Attention Is All You Need: Revisited</title>
+    <summary>The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train.</summary>
+    <author>
+      <name>Ashish Vaswani</name>
+    </author>
+    <author>
+      <name>Noam Shazeer</name>
+    </author>
+    <author>
+      <name>Niki Parmar</name>
+    </author>
+    <link href="http://arxiv.org/abs/2312.12245v2" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2312.12245v2" rel="related" type="application/pdf"/>
+    <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.CL"/>
+  </entry>
+</feed>

@@ -1,0 +1,10 @@
+{
+  "id": 12345678,
+  "title": "Why Constraints Fuel Creativity",
+  "slug": "why-constraints-fuel-creativity",
+  "post_date": "2024-03-15T08:00:00.000Z",
+  "publishedBylines": [
+    {"name": "Alice Wren", "handle": "alicewren"}
+  ],
+  "body_html": "<p>Constraints are often seen as the enemy of creativity. We imagine the ideal creative scenario as one of total freedom—no deadlines, no budgets, no rules. But the evidence suggests the opposite.</p><p>The history of art is full of examples where limitations produced masterpieces. Shakespeare wrote within the strict form of the sonnet. Bach composed under the constraints of liturgical requirements. The blues emerged partly from the limited range of available instruments.</p><p>Psychologists call this the \"paradox of choice\": too many options lead to paralysis, not freedom. When everything is possible, nothing feels necessary. Constraints force us to work within a space, and in doing so they define the edges of that space—which turns out to be a prerequisite for creativity, not an obstacle to it.</p><p>This applies to software as much as art. The best APIs are constrained ones. The best programming languages make certain things easy and certain things hard. Constraints communicate intent.</p><p>So the next time you feel hemmed in by a deadline or a limited budget, consider: the constraint might be exactly what you need to do your best work.</p>"
+}
