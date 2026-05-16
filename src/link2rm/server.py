@@ -30,6 +30,7 @@ class IngestRequest(BaseModel):
     url: str
     llm: bool = False
     folder: Optional[str] = None
+    format: Optional[str] = None  # "epub" | "pdf" | None → uses REMARKABLE_FORMAT default
 
 
 class IngestResponse(BaseModel):
@@ -45,7 +46,7 @@ async def ingest(req: IngestRequest, background_tasks: BackgroundTasks) -> Inges
         "url": req.url,
         "queued_at": time.time(),
     }
-    background_tasks.add_task(_process, job_id, req.url, req.llm, req.folder)
+    background_tasks.add_task(_process, job_id, req.url, req.llm, req.folder, req.format)
     return IngestResponse(job_id=job_id)
 
 
@@ -66,6 +67,7 @@ async def _process(
     url: str,
     use_llm: bool,
     folder: Optional[str],
+    fmt: Optional[str] = None,
 ) -> None:
     from link2rm.pipeline import run
 
@@ -73,7 +75,7 @@ async def _process(
     _jobs[job_id]["started_at"] = time.time()
     try:
         effective_llm = use_llm or config.LLM_CLEANUP
-        result = await run(url, use_llm=effective_llm, folder=folder)
+        result = await run(url, use_llm=effective_llm, folder=folder, fmt=fmt)
         _jobs[job_id].update(
             {
                 "status": "done",
@@ -82,6 +84,7 @@ async def _process(
                 "extraction_ms": result.extraction_ms,
                 "pdf_bytes": result.pdf_bytes,
                 "upload_status": result.upload_status,
+                "output_format": result.output_format,
                 "remarkable_id": result.remarkable_id,
                 "llm_tokens": result.llm_tokens,
                 "finished_at": time.time(),

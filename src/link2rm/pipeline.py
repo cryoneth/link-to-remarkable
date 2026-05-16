@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
-import httpx
+import shutil
 import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
-from link2rm import config
+import httpx
+
+from link2rm import config, remarkable
 from link2rm.extractor import extract
 from link2rm.handlers.base import ExtractResult
 from link2rm.logger import log_request
 from link2rm.pdf_render import make_filename, render_to_pdf
-from link2rm import remarkable
+from link2rm.epub_render import make_epub_filename, render_to_epub
+
+Format = Literal["epub", "pdf"]
 
 
 @dataclass
@@ -23,70 +27,88 @@ class PipelineResult:
     doc_name: str
     strategy: str
     extraction_ms: int
-    pdf_bytes: int
+    file_bytes: int
     upload_status: str
+    output_format: str
     remarkable_id: Optional[str] = None
     llm_tokens: int = 0
-    local_pdf: Optional[Path] = None
+    local_output: Optional[Path] = None
 
 
 async def run(
     url: str,
     use_llm: bool = False,
     folder: Optional[str] = None,
+    fmt: Optional[Format] = None,
     local_output: Optional[Path] = None,
 ) -> PipelineResult:
-    """Extract, render, and optionally upload a URL."""
-    target_folder = folder or config.REMARKABLE_FOLDER
+    """Extract, render, and optionally upload a URL.
 
-    # ── 1. Extract ────────────────────────────────────────────────
+    fmt defaults to config.REMARKABLE_FORMAT ("epub").
+    arXiv passthrough URLs always use PDF regardless of fmt.
+    """
+    target_folder = folder or config.REMARKABLE_FOLDER
+    output_fmt: Format = fmt or config.REMARKABLE_FORMAT  # type: ignore[assignment]
+
+    # ── 1. Extract ────────────────────────────────────────────────────────────
     t0 = time.monotonic()
     result = await extract(url, use_llm=use_llm)
     extraction_ms = int((time.monotonic() - t0) * 1000)
     llm_tokens = getattr(result, "_llm_tokens", 0)
 
-    # ── 2. Render / download PDF ──────────────────────────────────
     with tempfile.TemporaryDirectory() as tmpdir:
-        pdf_path: Path
+        tmp = Path(tmpdir)
+        file_path: Path
         doc_name: str
 
+        # ── 2. Render / passthrough ───────────────────────────────────────────
         if result.passthrough_pdf_url:
-            # arXiv or similar: download source PDF directly
-            pdf_path, doc_name = await _download_pdf(
-                result.passthrough_pdf_url, result, Path(tmpdir)
+            # arXiv et al: download the source PDF directly; skip local render
+            file_path, doc_name = await _download_pdf(
+                result.passthrough_pdf_url, result, tmp
             )
+            effective_fmt: Format = "pdf"
+        elif output_fmt == "epub":
+            filename = make_epub_filename(result.title, result.published_date)
+            file_path = tmp / filename
+            render_to_epub(result, file_path)
+            doc_name = (result.title or filename).strip()
+            effective_fmt = "epub"
         else:
             filename = make_filename(result.title, result.published_date)
-            pdf_path = Path(tmpdir) / filename
-            render_to_pdf(result, pdf_path)
+            file_path = tmp / filename
+            render_to_pdf(result, file_path)
             doc_name = (result.title or filename).strip()
+            effective_fmt = "pdf"
 
-        pdf_size = pdf_path.stat().st_size
+        file_size = file_path.stat().st_size
 
-        # ── 3. Copy to local output if requested ──────────────────
+        # ── 3. Copy to local path if requested ───────────────────────────────
         if local_output:
-            import shutil
-            shutil.copy2(pdf_path, local_output)
+            shutil.copy2(file_path, local_output)
 
-        # ── 4. Upload to reMarkable ───────────────────────────────
+        # ── 4. Upload to reMarkable ───────────────────────────────────────────
         rm_id = None
         upload_status = "skipped"
         if not local_output:
             try:
                 token_file = remarkable.ensure_authenticated()
-                entry = remarkable.upload_pdf(pdf_path, doc_name, target_folder, token_file)
+                if effective_fmt == "epub":
+                    entry = remarkable.upload_epub(file_path, doc_name, target_folder, token_file)
+                else:
+                    entry = remarkable.upload_pdf(file_path, doc_name, target_folder, token_file)
                 rm_id = entry.get("id")
                 upload_status = "ok"
             except Exception as e:
                 upload_status = f"error:{type(e).__name__}"
                 raise
 
-    # ── 5. Log ────────────────────────────────────────────────────
+    # ── 5. Log ────────────────────────────────────────────────────────────────
     log_request(
         url=url,
         strategy=result.strategy,
         extraction_ms=extraction_ms,
-        pdf_bytes=pdf_size,
+        pdf_bytes=file_size,
         upload_status=upload_status,
         llm_tokens=llm_tokens,
     )
@@ -96,11 +118,12 @@ async def run(
         doc_name=doc_name,
         strategy=result.strategy,
         extraction_ms=extraction_ms,
-        pdf_bytes=pdf_size,
+        file_bytes=file_size,
         upload_status=upload_status,
+        output_format=effective_fmt,
         remarkable_id=rm_id,
         llm_tokens=llm_tokens,
-        local_pdf=local_output,
+        local_output=local_output,
     )
 
 

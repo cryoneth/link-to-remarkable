@@ -46,17 +46,38 @@ def register_device(code: str, token_file: Path | None = None) -> None:
     )
 
 
+def upload_epub(
+    epub_path: Path,
+    doc_name: str,
+    folder: str,
+    token_file: Path | None = None,
+) -> dict:
+    """Upload an ePub to reMarkable (default format).
+
+    reMarkable renders ePubs natively with adjustable font size, margins, and
+    line spacing — a better reading experience than PDF.
+    """
+    return _upload_file(epub_path, doc_name, folder, "epub", token_file)
+
+
 def upload_pdf(
     pdf_path: Path,
     doc_name: str,
     folder: str,
     token_file: Path | None = None,
 ) -> dict:
-    """Upload a PDF to reMarkable.
+    """Upload a PDF to reMarkable."""
+    return _upload_file(pdf_path, doc_name, folder, "pdf", token_file)
 
-    Returns {"id": str, "hash": str, "name": str} from the Node shim.
-    Raises RuntimeError on failure.
-    """
+
+def _upload_file(
+    file_path: Path,
+    doc_name: str,
+    folder: str,
+    file_type: str,
+    token_file: Path | None = None,
+) -> dict:
+    """Shared upload implementation — routes to putEpub or putPdf in the shim."""
     tf = token_file or RMAPI_TOKEN_FILE
     if not tf.exists():
         raise FileNotFoundError(
@@ -68,10 +89,10 @@ def upload_pdf(
     env_extras = {
         "TOKEN_FILE": str(tf),
         "DOC_NAME": doc_name,
-        "PDF_PATH": str(pdf_path),
+        "FILE_PATH": str(file_path),
+        "FILE_TYPE": file_type,          # "epub" | "pdf"
         "FOLDER_NAME": folder,
     }
-    # Pass through REMARKABLE_FOLDER_ID if set — skips the expensive listIds scan
     if folder_id := _os.getenv("REMARKABLE_FOLDER_ID", ""):
         env_extras["REMARKABLE_FOLDER_ID"] = folder_id
 

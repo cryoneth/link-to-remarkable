@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 REMARKABLE_FOLDER: str = os.getenv("REMARKABLE_FOLDER", "/Articles/Inbox")
+# Output format: "epub" (default) or "pdf"
+# arXiv papers always use PDF passthrough regardless of this setting.
+REMARKABLE_FORMAT: str = os.getenv("REMARKABLE_FORMAT", "epub").lower()
 RMAPI_TOKEN_FILE: Path = Path(
     os.getenv("RMAPI_TOKEN_FILE", "~/.config/link2rm/rmapi-token")
 ).expanduser()
