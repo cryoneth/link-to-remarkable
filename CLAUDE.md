@@ -36,7 +36,6 @@ URL → extractor (cascade) → ExtractResult → pdf_render → PDF → remarka
 ## Do not
 
 - Do NOT send raw HTML to any LLM. The LLM path (`llm_cleanup.py`) receives only the already-extracted `content_text`.
-- Do NOT modify `/Users/cryon/Documents/Projects/telegram-monitor`.
 - Do NOT hardcode credentials. Use `.env` and `config.py`.
 - Do NOT add per-site extraction logic outside of `src/link2rm/handlers/`. The cascade handles unknown sites automatically.
 - Do NOT use synchronous `requests` — use `httpx.AsyncClient` for all HTTP.

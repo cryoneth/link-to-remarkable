@@ -34,7 +34,7 @@ A strategy is accepted the moment it produces: a non-empty title + content text 
 ## Install
 
 ```bash
-git clone <repo> link-to-remarkable
+git clone https://github.com/cryoneth/link-to-remarkable.git
 cd link-to-remarkable
 
 # Python deps
@@ -60,7 +60,7 @@ uv run link2rm --register
 # Token saved to ~/.config/link2rm/rmapi-token
 ```
 
-The token is the same format used by `telegram-monitor` — you can share the same `.rmapi-token` file by pointing `RMAPI_TOKEN_FILE` at it in your `.env`.
+The token file is compatible with other `rmapi-js`–based tools — point `RMAPI_TOKEN_FILE` in your `.env` at an existing token to share it.
 
 ---
 
@@ -165,7 +165,7 @@ rm2 "$(pbpaste)"
 | Variable | Default | Purpose |
 |---|---|---|
 | `REMARKABLE_FOLDER` | `/Articles/Inbox` | Destination folder on the tablet. Must exist — create from the tablet first. Supports nested paths: `Articles/Inbox` |
-| `RMAPI_TOKEN_FILE` | `~/.config/link2rm/rmapi-token` | Path to the device auth token. Share with telegram-monitor by pointing at the same file. |
+| `RMAPI_TOKEN_FILE` | `~/.config/link2rm/rmapi-token` | Path to the device auth token. Can be shared with other rmapi-js–based tools by pointing at the same file. |
 | `LLM_CLEANUP` | `false` | Enable LLM cleanup globally (per-request `--llm` flag takes precedence) |
 | `ANTHROPIC_API_KEY` | — | Required only if `LLM_CLEANUP=true` or `--llm` is passed |
 | `HOST` | `0.0.0.0` | Server bind host |
