@@ -102,18 +102,27 @@ curl http://localhost:8765/jobs/<job_id>
 
 ## Share-target setup
 
-### Samsung S24 Ultra (Android) — HTTP Shortcuts
+### Android — HTTP Shortcuts (over Tailscale)
 
-1. Install **HTTP Shortcuts** from the Play Store.
-2. Create a new shortcut:
-   - Method: `POST`
-   - URL: `http://<your-machine-ip>:8765/ingest`  
-     (use your Tailscale IP if you're on different networks)
-   - Headers: `Content-Type: application/json`
-   - Request body: `{"url": "{url}"}`
-   - Set **Content Type** to `JSON`
-3. Enable **Share Target** in the shortcut's settings.
-4. Now: open any article in Chrome → Share → HTTP Shortcuts → select your shortcut.
+To reach the server from your phone when off the home network, put both machines on Tailscale and use the Mac's Tailscale IP (`100.x.x.x`) in the shortcut URL.
+
+1. **Tailscale:** install on the Mac (`brew install --cask tailscale`) and on the phone (Play Store). Sign into the same account on both. Note the Mac's `100.x.x.x` IP from the Tailscale menu bar.
+2. Install **HTTP Shortcuts** (by Waboodoo) from the Play Store.
+3. **Create a global variable** (this is the part that's easy to miss):
+   - Main menu → Variables → **+**
+   - Name: `url`, Type: `Text Input` (any type works)
+   - Open **Advanced Settings** → toggle **"Allow Receiving Value from Share Dialog"** ON
+   - Set "Use" to **"the text"**
+4. **Create the shortcut:**
+   - Name: `Send to reMarkable`
+   - Basic Request Settings → Method `POST`, URL `http://<tailscale-ip>:8765/ingest`
+   - Request Body / Parameters → body type `Custom text`, content type `application/json`
+   - Body: `{"url": "{url}"}` — **insert the `url` variable using the `{}` picker, don't type it as text**. A properly inserted variable renders as a coloured chip, not plain text. If you just type `{url}`, the server will receive the literal string.
+   - Response Handling → Success toast: `Sent to reMarkable ✓`
+   - Trigger & Execution Settings → enable **"Show as app shortcut on launcher"** (this also enables Direct Share)
+5. **Test:** open any article in Chrome / Firefox / Substack → Share → **Send to reMarkable** → article appears on the tablet within ~30 s.
+
+If you see "No suitable shortcuts found" when sharing, the `url` variable doesn't have "Allow Receiving Value from Share Dialog" enabled. If the reMarkable receives a document titled literally `{url}`, the variable wasn't inserted via the picker — it was typed as text.
 
 ### macOS — Raycast / Alfred / shortcuts
 
