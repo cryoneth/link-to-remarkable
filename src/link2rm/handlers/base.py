@@ -16,10 +16,15 @@ class ExtractResult:
     # Set by arXiv handler when the user should receive the source PDF directly.
     # The pipeline skips HTML→PDF rendering and downloads this URL instead.
     passthrough_pdf_url: Optional[str] = None
+    # Set by handlers that know their content is good even if short
+    # (e.g. a single tweet that's well under the 500-char generic threshold).
+    force_confident: bool = False
 
     @property
     def is_confident(self) -> bool:
         if self.passthrough_pdf_url:
+            return True
+        if self.force_confident and self.title.strip() and self.content_text.strip():
             return True
         return (
             bool(self.title.strip())

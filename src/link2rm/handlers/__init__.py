@@ -9,12 +9,14 @@ from .arxiv import ArXivHandler
 from .base import BaseHandler, ExtractResult
 from .medium import MediumHandler
 from .substack import SubstackHandler
+from .x import XHandler
 
 # Handlers are tried in order; first match wins.
 HANDLERS: list[type[BaseHandler]] = [
     ArXivHandler,
     SubstackHandler,
     MediumHandler,
+    XHandler,
 ]
 
 
@@ -31,6 +33,7 @@ __all__ = [
     "ArXivHandler",
     "SubstackHandler",
     "MediumHandler",
+    "XHandler",
     "HANDLERS",
     "get_handler",
 ]
