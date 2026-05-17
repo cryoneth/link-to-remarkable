@@ -123,8 +123,12 @@ def render_to_epub(result: ExtractResult, output_path: Path) -> None:
     book.add_item(chapter)
 
     # ── Spine / TOC ───────────────────────────────────────────────────────────
+    # The nav item is registered (so readers that show a TOC in their UI can use
+    # it) but kept OUT of the spine. Putting it in the spine makes reMarkable
+    # render the auto-generated TOC ("1. <title>") as the first content page,
+    # which is useless for a single-chapter article.
     book.toc = [chapter]
-    book.spine = ["nav", chapter]
+    book.spine = [chapter]
     book.add_item(epub.EpubNcx())
     book.add_item(epub.EpubNav())
 
