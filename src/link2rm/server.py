@@ -82,7 +82,7 @@ async def _process(
                 "doc_name": result.doc_name,
                 "strategy": result.strategy,
                 "extraction_ms": result.extraction_ms,
-                "pdf_bytes": result.pdf_bytes,
+                "file_bytes": result.file_bytes,
                 "upload_status": result.upload_status,
                 "output_format": result.output_format,
                 "remarkable_id": result.remarkable_id,
