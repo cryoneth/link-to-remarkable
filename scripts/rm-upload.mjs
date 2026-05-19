@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Upload a PDF or ePub to reMarkable Cloud (rmapi-js v9).
+ * Upload a PDF or ePub to reMarkable Cloud (rmapi-js v10).
  *
  * Env vars:
  *   TOKEN_FILE          — path to the device token file
@@ -26,7 +26,6 @@ if (!TOKEN_FILE || !DOC_NAME || !FILE_PATH) {
 const token = readFileSync(TOKEN_FILE, "utf-8").trim();
 const fileBytes = readFileSync(FILE_PATH);
 
-// v9: remarkable() is async
 const api = await remarkable(token);
 
 // ── Resolve target folder id ──────────────────────────────────────────────────
@@ -40,18 +39,19 @@ if (REMARKABLE_FOLDER_ID) {
   const parts = FOLDER_NAME.replace(/^\//, "").split("/").filter(Boolean);
   console.error(`  Resolving folder path: ${FOLDER_NAME}`);
 
+  // Use listIds + batched getMetadata with early exit instead of listItems(),
+  // because listItems() fetches every item's metadata in parallel and times out
+  // on libraries with hundreds of documents.
   const ids = await api.listIds();
   console.error(`  Got ${ids.length} item ids. Scanning for folders...`);
 
-  const items = await fetchMetadataBatched(api, ids, 10);
+  const folders = await scanForFolders(api, ids, parts, 10);
 
   let currentParentId = "";
   let resolved = true;
   for (const part of parts) {
-    const match = items.find(
-      (i) => i.type === "CollectionType"
-          && i.visibleName === part
-          && i.parent === currentParentId
+    const match = folders.find(
+      (f) => f.visibleName === part && (f.parent ?? "") === currentParentId
     );
     if (!match) {
       console.error(`  Warning: folder "${part}" not found (path: ${FOLDER_NAME}). Uploading to root.`);
@@ -82,36 +82,43 @@ console.log(JSON.stringify({ id: entry.id, hash: entry.hash, name: DOC_NAME, par
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function fetchMetadataBatched(api, ids, concurrency) {
-  const results = [];
+/**
+ * Fetch metadata in batches, stopping early once we've found enough folder
+ * entries to resolve the requested path. Avoids the listItems() parallel-fetch
+ * timeout on large libraries.
+ *
+ * v10 NOTE: getMetadata(id, hash) — both args required (was just hash in v9).
+ */
+async function scanForFolders(api, ids, pathParts, concurrency) {
+  const folders = [];
   for (let i = 0; i < ids.length; i += concurrency) {
     const batch = ids.slice(i, i + concurrency);
     const metas = await Promise.all(
       batch.map(async ({ id, hash }) => {
         try {
-          const meta = await api.getMetadata(hash);
+          const meta = await api.getMetadata(id, hash);
           return { id, hash, ...meta };
         } catch {
           return null;
         }
       })
     );
-    results.push(...metas.filter(Boolean));
-
-    const folders = results.filter((r) => r.type === "CollectionType");
-    if (FOLDER_NAME && _pathResolvable(folders, FOLDER_NAME.replace(/^\//, "").split("/").filter(Boolean))) {
+    for (const m of metas) {
+      if (m && m.type === "CollectionType") folders.push(m);
+    }
+    if (pathResolvable(folders, pathParts)) {
       console.error(`  Found all needed folders after scanning ${i + batch.length}/${ids.length} items.`);
       break;
     }
   }
-  return results;
+  return folders;
 }
 
-function _pathResolvable(folders, parts) {
+function pathResolvable(folders, parts) {
   let currentParentId = "";
   for (const part of parts) {
     const match = folders.find(
-      (f) => f.visibleName === part && f.parent === currentParentId
+      (f) => f.visibleName === part && (f.parent ?? "") === currentParentId
     );
     if (!match) return false;
     currentParentId = match.id;
