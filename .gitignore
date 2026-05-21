@@ -12,3 +12,5 @@ node_modules/
 scripts/node_modules/
 *.pdf
 tmp/
+
+.DS_Store
