@@ -90,15 +90,18 @@ async def _fetch_html(url: str) -> tuple[str, Optional[Exception]]:
 
 
 def _trafilatura(url: str, html: str) -> ExtractResult:
-    extracted = trafilatura.extract(
-        html,
-        url=url,
-        include_images=True,
-        include_links=True,
-        favor_precision=True,
-        output_format="xml",
-        with_metadata=True,
-    )
+    try:
+        extracted = trafilatura.extract(
+            html,
+            url=url,
+            include_images=True,
+            include_links=True,
+            favor_precision=True,
+            output_format="xml",
+            with_metadata=True,
+        )
+    except Exception:
+        return ExtractResult(strategy="trafilatura-error")
     if not extracted:
         return ExtractResult(strategy="trafilatura-empty")
 
@@ -113,25 +116,39 @@ def _trafilatura(url: str, html: str) -> ExtractResult:
     except Exception:
         pass
 
-    # Use HTML output for rendering, plain text for confidence check
-    html_out = trafilatura.extract(
-        html,
-        url=url,
-        include_images=True,
-        include_links=True,
-        favor_precision=True,
-        output_format="html",
-        with_metadata=True,
-    ) or ""
-    text_out = trafilatura.extract(
-        html,
-        url=url,
-        include_images=True,
-        include_links=True,
-        favor_precision=True,
-        output_format="txt",
-        with_metadata=True,
-    ) or ""
+    # Use HTML output for rendering, plain text for confidence check.
+    # Trafilatura's HTML metadata-rendering pipeline crashes on multi-author
+    # articles (lxml expects a string but gets a list), so we wrap each
+    # individually and degrade gracefully on failure.
+    try:
+        html_out = trafilatura.extract(
+            html,
+            url=url,
+            include_images=True,
+            include_links=True,
+            favor_precision=True,
+            output_format="html",
+            with_metadata=True,
+        ) or ""
+    except Exception:
+        html_out = ""
+    try:
+        text_out = trafilatura.extract(
+            html,
+            url=url,
+            include_images=True,
+            include_links=True,
+            favor_precision=True,
+            output_format="txt",
+            with_metadata=True,
+        ) or ""
+    except Exception:
+        text_out = ""
+
+    # If the HTML render failed but text survived, fall through so readability
+    # can have a try; trafilatura with no HTML body is useless for ePub render.
+    if not html_out:
+        return ExtractResult(strategy="trafilatura-html-fail")
 
     if len(text_out.strip()) < 200:
         return ExtractResult(strategy="trafilatura-short")
